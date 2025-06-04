@@ -1,9 +1,13 @@
 package GUI;
 
 import java.awt.EventQueue;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.util.List;
 
+import javax.persistence.EntityManager;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -11,6 +15,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+
+import model.Actividad;
+import model.Solicitud;
+import utils.JPAUtil;
+
 import javax.swing.JTextArea;
 import java.awt.Font;
 
@@ -244,27 +253,134 @@ public class DlgSolicitud extends JDialog implements ActionListener {
 	}
 
 	void cargarActividades() {
-
+		EntityManager em = JPAUtil.getEntityManager();
+		try {
+			List<Actividad> lista = em.createQuery("SELECT a FROM Actividad a", Actividad.class).getResultList();
+			cboActividad.removeAllItems();
+			for (Actividad a : lista) {
+				cboActividad.addItem(a);
+			}
+		} finally {
+			em.close();
+		}
 	}
 
 	void listar() {
-
+		EntityManager em = JPAUtil.getEntityManager();
+		try {
+			List<Solicitud> lista = em.createQuery("SELECT s FROM Solicitud s", Solicitud.class).getResultList();
+			txtSalida.setText("");
+			for (Solicitud s : lista) {
+				String linea = String.format("ID: %d | Actividad: %s | Estado: %s | Archivo: %s | Fecha: %s",
+					s.getId(),
+					s.getActividad().getDescripcion(),
+					s.getEstado(),
+					s.getArchivo_adjunto(),
+					s.getFecha_reg());
+				imprimir(linea);
+			}
+		} finally {
+			em.close();
+		}
 	}
-
+	
 	void adicionar() {
+		EntityManager em = JPAUtil.getEntityManager();
+		try {
+			Solicitud s = new Solicitud();
+			s.setArchivo_adjunto(txtArchivoAdjunto.getText());
+			s.setEstado(cboEstado.getSelectedItem().toString());
+			s.setActividad((Actividad) cboActividad.getSelectedItem());
+			s.setFecha_reg(LocalDate.now());
 
+			em.getTransaction().begin();
+			em.persist(s);
+			em.getTransaction().commit();
+
+			mensajeInfo("Solicitud registrada");
+			limpiar();
+		} catch (Exception e) {
+			mensajeError("Error al registrar: " + e.getMessage());
+		} finally {
+			em.close();
+		}
 	}
 	
 	void buscar() {
+		int id;
+		try {
+			id = Integer.parseInt(txtIdSolicitud.getText());
+		} catch (NumberFormatException e) {
+			mensajeError("ID inválido");
+			return;
+		}
 
+		EntityManager em = JPAUtil.getEntityManager();
+		try {
+			Solicitud s = em.find(Solicitud.class, id);
+			if (s == null) {
+				mensajeError("Solicitud no encontrada");
+			} else {
+				txtArchivoAdjunto.setText(s.getArchivo_adjunto());
+				cboActividad.setSelectedItem(s.getActividad());
+				cboEstado.setSelectedItem(s.getEstado());
+				txtFechaRegistro.setText(s.getFecha_reg().toString());
+				habilitarOk();
+			}
+		} finally {
+			em.close();
+		}
 	}
 
 	void modificar() {
+		int id = Integer.parseInt(txtIdSolicitud.getText());
 
+		EntityManager em = JPAUtil.getEntityManager();
+		try {
+			Solicitud s = em.find(Solicitud.class, id);
+			if (s == null) {
+				mensajeError("Solicitud no encontrada");
+				return;
+			}
+
+			em.getTransaction().begin();
+			s.setArchivo_adjunto(txtArchivoAdjunto.getText());
+			s.setEstado(cboEstado.getSelectedItem().toString());
+			s.setActividad((Actividad) cboActividad.getSelectedItem());
+			em.getTransaction().commit();
+
+			mensajeInfo("Solicitud actualizada");
+			limpiar();
+		} catch (Exception e) {
+			mensajeError("Error al modificar: " + e.getMessage());
+		} finally {
+			em.close();
+		}
 	}
 
-	void eliminar() {
 
+	void eliminar() {
+		int id = Integer.parseInt(txtIdSolicitud.getText());
+
+		EntityManager em = JPAUtil.getEntityManager();
+		try {
+			Solicitud s = em.find(Solicitud.class, id);
+			if (s == null) {
+				mensajeError("Solicitud no encontrada");
+				return;
+			}
+
+			em.getTransaction().begin();
+			em.remove(s);
+			em.getTransaction().commit();
+
+			mensajeInfo("Solicitud eliminada");
+			limpiar();
+		} catch (Exception e) {
+			mensajeError("Error al eliminar: " + e.getMessage());
+		} finally {
+			em.close();
+		}
 	}
 
 	// M�todos tipo void (con par�metros)

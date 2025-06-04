@@ -8,11 +8,13 @@ import org.hibernate.annotations.DynamicInsert;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 @Entity
 @Table(name = "tbl_solicitud")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @DynamicInsert
-
+@Getter@Setter
 public class Solicitud {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

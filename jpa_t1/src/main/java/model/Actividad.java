@@ -14,13 +14,14 @@ import lombok.Setter;
 @Table (name="tbl_actividad")
 @DynamicInsert
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-
 @Getter@Setter
+
 public class Actividad {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name= "id_actividad")
+	 @EqualsAndHashCode.Include 
 	private int id;
 	
 	@Column(name = "descripcion", nullable = false)
@@ -34,8 +35,13 @@ public class Actividad {
 	@Column(name = "fecha_inicio", nullable = false) 
     private LocalDate fechaInicio;
 	
-	@Column(name = "nro_vacantes,")
-	private int nroVacantes = 100;
+	@Column(name = "nro_vacantes")
+	private int nro_vacantes;
 	
-	
+	@Override
+	public String toString() {
+	    return descripcion;
+	}
+
+
 }
